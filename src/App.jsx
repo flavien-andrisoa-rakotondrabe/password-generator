@@ -1398,11 +1398,10 @@ function PageGenerator() {
             <StrengthBar entropy={ae} />
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
                 gap: 12,
                 margin: '16px 0',
               }}
+              className="grid grid-cols-2"
             >
               <StatCard
                 value={analyzePw.length}
