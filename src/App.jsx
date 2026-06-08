@@ -979,7 +979,7 @@ function AlertBanner({ children }) {
   );
 }
 
-function PasswordDisplay({ pw, visible, onToggle, onCopy, copied }) {
+function PasswordDisplay({ pw, visible, onToggle, onCopy, copied, className }) {
   const chars = pw ? pw.split('') : [];
   const getCharColor = (c) => {
     if (/[A-Z]/.test(c)) return THEME.colors.text.info;
@@ -1000,6 +1000,7 @@ function PasswordDisplay({ pw, visible, onToggle, onCopy, copied }) {
         border: `1px solid ${THEME.colors.border.primary}`,
         boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
       }}
+      className={className}
     >
       <div
         style={{
@@ -1083,6 +1084,8 @@ function PageGenerator() {
   const [analyzePw, setAnalyzePw] = useState('');
   const [analyzeVisible, setAnalyzeVisible] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
 
   const generate = useCallback(
     (o = opts) => {
@@ -1170,6 +1173,21 @@ function PageGenerator() {
   if (/^[0-9]+$/.test(analyzePw))
     aWarnings.push('Chiffres uniquement — très vulnérable');
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(pw);
+      setIsCopied(true);
+      setShowNotification(true);
+
+      setTimeout(() => {
+        setIsCopied(false);
+        setShowNotification(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Erreur : ', err);
+    }
+  };
+
   return (
     <div>
       <Card>
@@ -1178,13 +1196,61 @@ function PageGenerator() {
           title="Générateur de mot de passe"
           subtitle="Générez des chaînes cryptographiques hautement sécurisées conformes ANSSI."
         />
-        <PasswordDisplay
-          pw={pw}
-          visible={visible}
-          onToggle={() => setVisible((v) => !v)}
-          onCopy={copyPw}
-          copied={copied}
-        />
+
+        {showNotification && (
+          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-green-600 text-white text-sm font-medium py-2 px-6 rounded-full shadow-lg transition-all animate-fade-in">
+            Mot de passe copié avec succès !
+          </div>
+        )}
+
+        <div className="relative flex items-center">
+          <PasswordDisplay
+            pw={pw}
+            visible={visible}
+            onToggle={() => setVisible((v) => !v)}
+            onCopy={copyPw}
+            copied={copied}
+            className={'flex-1'}
+          />
+
+          <button className="absolute right-4" onClick={handleCopy}>
+            {isCopied ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-copy-check-icon lucide-copy-check"
+              >
+                <path d="m12 15 2 2 4-4" />
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-copy-icon lucide-copy size-4"
+              >
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+              </svg>
+            )}
+          </button>
+        </div>
+
         <div style={{ marginTop: 16 }}>
           <StrengthBar entropy={entropy} />
         </div>
